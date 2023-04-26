@@ -1,0 +1,50 @@
+Timer unit: 1e-06 s
+
+-----------------------------------------------------------------------------------------------
+
+Total time: 1693 s
+File: /Users/saianuroopkesanapalli/Desktop/RA/Anomaly Detection/pidforest-master/code/scripts/forest.py
+Function: fit at line 38
+
+    60      1000 1649698826.0 1649698.8     97.4              root_node = Node(**k_args)
+
+-----------------------------------------------------------------------------------------------
+
+Total time: 72.7613 s
+File: /Users/saianuroopkesanapalli/Desktop/RA/Anomaly Detection/pidforest-master/code/scripts/forest.py
+Function: __init__ at line 136
+
+	144    738890   52575415.0     71.2     72.3              val, count = np.unique(np.array(self.node.forest.points[axis, self.indices]), return_counts=True)
+
+	154   8278719   10988057.0      1.3     15.1                      gap[i] = (val[i + 1] - val[i - 1]) / 2 --> optimized this
+
+-----------------------------------------------------------------------------------------------
+
+Total time: 284.939 s
+File: /Users/saianuroopkesanapalli/Desktop/RA/Anomaly Detection/pidforest-master/code/scripts/forest.py
+Function: split_indices at line 181 --> optimized this
+
+	193     51412   93001139.0   1808.9     32.6          index_split[0] = [ind for ind in indices if ((s_arr[ind] >= s_start) and (s_arr[ind] < self.split_vals[0]))]
+
+	194     51412   67773417.0   1318.2     23.8          index_split[-1] = [ind for ind in indices if ((s_arr[ind] >= self.split_vals[-1]) and (s_arr[ind] < s_end))]
+
+	196     42934  123511012.0   2876.8     43.3              index_split[k] = [ind for ind in indices if (s_arr[ind] >= self.split_vals[k - 1]) and
+   	
+   	197                                                                         (s_arr[ind] < self.split_vals[k])]
+
+-----------------------------------------------------------------------------------------------
+
+Total time: 777.176 s
+File: /Users/saianuroopkesanapalli/Desktop/RA/Anomaly Detection/pidforest-master/code/scripts/hg.py
+Function: approx_buckets at line 83  --> optimized this 
+
+	120 168375972  105192441.0      0.6     13.5              for b_val in b_values[k - 1].keys():
+
+	122 151762906  112879624.0      0.7     14.5                      _, b_err, b_sum, b_sq, b_pts = b_values[k - 1][b_val]
+
+	123 151762906  214949021.0      1.4     27.7                      tmp_error = b_err + cur_sq - b_sq - (cur_sum - b_sum) ** 2 / (cur_pts - b_pts)
+
+	124 109324681   80831740.0      0.7     10.4                      if tmp_error < cur_err[k]:
+
+
+
