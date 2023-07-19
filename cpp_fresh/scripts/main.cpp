@@ -75,24 +75,21 @@ int main() {
     X = TimeSeries::transpose(X);
 
     // Print the shingled and transposed data
-    cout << "X:" << endl;
+    std::cout << "\n >> Printing " << dataset << " dataset \n";
     for (const auto& row : X) {
         for (double val : row) {
             cout << val << " ";
         }
         cout << endl;
     }
-
-
-    std::cout << "\n\n******" << dataset << " trial 1*******\n\n";
     
-    std::cout << "\n******Our Algo*******\n";
+    std::cout << "\n>> Running PIDForest Algorithm on " << dataset << " dataset\n";
 
     vector<vector<double>> pts;  // Provide your data here
     pts = X;
-    std::cout << "\n******FIT*******\n";
+    std::cout << "\n >> Running Forest::fit\n";
     mForest.fit(pts);
-    std::cout << "\n******FIT_DONE*******\n";
+    std::cout << "\n >> Forest::fit DONE\n";
     
     // Make predictions
     vector<int> indices;
@@ -102,11 +99,13 @@ int main() {
     vector<double> our_scores;
     double err = 0.1;
     double pct = 0.0;
-    std::cout << "\n******PREDICT*******\n";
+    std::cout << "\n >> Running Forest::predict\n";
     
     tie(indices, outliers, scores, pst, our_scores) = mForest.predict(pts, err, pct);
+    std::cout << "\n >> Forest::predict DONE\n";
     
     // Output the results
+    std::cout << "\n >> Printing outputs Forest::predict\n";
     cout << "Indices: ";
     for (int idx : indices) {
         cout << idx << " ";
