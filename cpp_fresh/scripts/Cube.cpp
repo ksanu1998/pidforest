@@ -2,6 +2,12 @@
 #include "Node.h"
 #include "Forest.h"
 
+Cube::Cube(Node* n, const std::vector<double>& s, const std::vector<double>& e)
+    : node(n), start(s), end(e) {
+    std::cout << "BUILDING CUBE" << std::endl;
+    // Additional initialization code, if needed
+}
+
 std::vector<int> Cube::filter_indices(const std::vector<int>& indices) {
     std::vector<int> filtered_indices;
     for (int i : indices) {

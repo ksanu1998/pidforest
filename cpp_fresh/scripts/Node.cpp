@@ -15,9 +15,11 @@ Node::Node(int depth, Forest* forest, const std::unordered_map<std::string, std:
     if (depth == 0) {
         id_string = {0};
         cube = Cube(this, forest->start, forest->end);
+        std::cout << "FINISHED BUILDING CUBE" << std::endl;
         // cube = Cube(this, std::get<std::array<double, 3>>(kwargs.at("start")), std::get<std::array<double, 3>>(kwargs.at("end")));
         // point_set = PointSet(this, std::get<std::vector<int>>(kwargs.at("indices")));
         point_set = PointSet(this, std::unordered_set<int>(std::get<std::vector<int>>(kwargs.at("indices")).begin(), std::get<std::vector<int>>(kwargs.at("indices")).end()));
+        std::cout << "FINISHED BUILDING POINTSET" << std::endl;
     }
     else {
         id_string = std::get<std::vector<int>>(kwargs.at("id"));

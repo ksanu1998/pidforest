@@ -3,6 +3,7 @@
 #include "Forest.h"
 
 PointSet::PointSet(Node* n, const std::unordered_set<int>& inds) : node(n), indices(inds) {
+    std::cout << "BUILDING POINTSET" << std::endl;
     int dim = node->forest->dim;
     val.resize(dim);
     count.resize(dim);
