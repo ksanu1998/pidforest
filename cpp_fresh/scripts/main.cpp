@@ -13,15 +13,23 @@ using namespace std;
 
 int main() {
     // Load your data and set up variables
-    // string dataset = "nyc_taxi";
-    int n_samples = 100;
-    int max_depth = 10;
     int n_trees = 50;
-    int max_samples = n_samples;
+    int max_samples = 100;
+    int max_depth = 10;
     int max_buckets = 3;
     double epsilon = 0.1;
     double sample_axis = 1.0;
     double threshold = 0.0;
+
+    
+    std::cout << "\n >> PIDForest Parameters\n";
+    std::cout << "\n >> n_trees:" << n_trees << "\n";
+    std::cout << "\n >> max_samples:" << max_samples << "\n";
+    std::cout << "\n >> max_depth:" << max_depth << "\n";
+    std::cout << "\n >> max_buckets:" << max_buckets << "\n";
+    std::cout << "\n >> epsilon:" << epsilon << "\n";
+    std::cout << "\n >> sample_axis:" << sample_axis << "\n";
+    std::cout << "\n >> threshold:" << threshold << "\n";
     
     // Create the forest
     unordered_map<string, double> kwargs = {
@@ -36,7 +44,7 @@ int main() {
     Forest mForest(kwargs);
     
     string dataset = "nyc_taxi";  // Set your dataset name here
-
+    
     // Read the CSV file
     string filename = "../data/numenta/" + dataset + ".csv";
     ifstream file(filename);
@@ -44,6 +52,7 @@ int main() {
         cerr << "Failed to open file: " << filename << endl;
         return 1;
     }
+    std::cout << "\n >> Using "<< dataset << " dataset, present at " << filename << "\n";
 
     vector<double> value;
     vector<int> label;
@@ -75,15 +84,20 @@ int main() {
     X = TimeSeries::transpose(X);
 
     // Print the shingled and transposed data
-    std::cout << "\n >> Printing " << dataset << " dataset \n";
+    std::cout << "\n >> There are " << X.size() << " shingles \n";
+    
+    int shingle_count = 0;
     for (const auto& row : X) {
+        shingle_count++;
+        std::cout << "\n >> Shingle #" << shingle_count <<"\n";
+        std::cout << " >> "; 
         for (double val : row) {
             cout << val << " ";
         }
         cout << endl;
     }
     
-    std::cout << "\n>> Running PIDForest Algorithm on " << dataset << " dataset\n";
+    std::cout << "\n >> Running PIDForest algorithm on " << dataset << " dataset\n";
 
     vector<vector<double>> pts;  // Provide your data here
     pts = X;
@@ -106,7 +120,7 @@ int main() {
     
     // Output the results
     std::cout << "\n >> Printing outputs Forest::predict\n";
-    cout << "Indices: ";
+    cout << "\n >> Indices: ";
     for (int idx : indices) {
         cout << idx << " ";
     }
@@ -116,7 +130,7 @@ int main() {
     for (const auto& entry : outliers) {
         int idx = entry.first;
         const vector<double>& outlierValues = entry.second;
-        cout << "Outlier at index " << idx << ": ";
+        cout << "\n >> Outlier at index " << idx << ": ";
         for (double val : outlierValues) {
             cout << val << " ";
         }
@@ -127,7 +141,7 @@ int main() {
     for (const auto& entry : scores) {
         int idx = entry.first;
         const vector<double>& scoreValues = entry.second;
-        cout << "Scores for index " << idx << ": ";
+        cout << "\n >> Scores for index " << idx << ": ";
         for (double val : scoreValues) {
             cout << val << " ";
         }
@@ -138,11 +152,11 @@ int main() {
     for (const auto& entry : pst) {
         int idx = entry.first;
         double pstValue = entry.second;
-        cout << "PST for index " << idx << ": " << pstValue << endl;
+        cout << "\n >> PST for index " << idx << ": " << pstValue << endl;
     }
     
     // Print the our_scores values
-    cout << "Our Scores: ";
+    cout << "\n >> Our Scores: ";
     for (double val : our_scores) {
         cout << val << " ";
     }
