@@ -43,7 +43,7 @@ int main() {
     };
     Forest mForest(kwargs);
     
-    string dataset = "nyc_taxi";  // Set your dataset name here
+    string dataset = "machine_temperature_system_failure";  // Set your dataset name here
     
     // Read the CSV file
     string filename = "../data/numenta/" + dataset + ".csv";

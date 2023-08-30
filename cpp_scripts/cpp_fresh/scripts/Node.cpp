@@ -8,16 +8,14 @@
 #include <algorithm>
 
 Node::Node(int depth, Forest* forest, const std::unordered_map<std::string, std::variant<std::vector<int>, std::array<double, 3>>>& kwargs)
-    : depth(depth), forest(forest),
+    : depth(depth), forest(forest), 
       point_set(this, std::unordered_set<int>()), 
-      cube(this, std::vector<double>(), std::vector<double>())
+      cube(this, int(), std::vector<double>(), std::vector<double>())
 {
     if (depth == 0) {
         id_string = {0};
-        cube = Cube(this, forest->start, forest->end);
-        // std::cout << "FINISHED BUILDING CUBE" << std::endl;
+        cube = Cube(this, forest->dim, forest->start, forest->end);
         point_set = PointSet(this, std::unordered_set<int>(std::get<std::vector<int>>(kwargs.at("indices")).begin(), std::get<std::vector<int>>(kwargs.at("indices")).end()));
-        // std::cout << "FINISHED BUILDING POINTSET" << std::endl;
     }
     else {
         id_string = std::get<std::vector<int>>(kwargs.at("id"));
@@ -25,51 +23,95 @@ Node::Node(int depth, Forest* forest, const std::unordered_map<std::string, std:
         std::array<double, 3> endArray = std::get<std::array<double, 3>>(kwargs.at("end"));
         std::vector<double> startVector(startArray.begin(), startArray.end());
         std::vector<double> endVector(endArray.begin(), endArray.end());
-        cube = Cube(this, startVector, endVector);
-        // point_set = PointSet(this, cube.filter_indices(std::get<std::vector<int>>(kwargs.at("indices"))));
-        point_set = PointSet(this, std::unordered_set<int>(std::get<std::vector<int>>(kwargs.at("indices")).begin(), std::get<std::vector<int>>(kwargs.at("indices")).end()));
+        cube = Cube(this, forest->dim, startVector, endVector);
+        point_set = PointSet(this, std::unordered_set<int>(std::get<std::vector<int>>(kwargs.at("indices")).begin(), std::get<std::vector<int>>(kwargs.at("indices")).end())); 
     }
     density = -1;
     child = std::vector<Node>();
     if ((depth < forest->max_depth) && (point_set.indices.size() > 1)) {
         find_split();
-    }
+    }    
 }
 
 void Node::find_split()
 {
+    std::cout << "cube.dim, " << cube.dim << std::endl;
     std::vector<int> imp_axis;
     for (int axis = 0; axis < cube.dim; ++axis) {
         if (point_set.val[axis].size() > 1) {
             imp_axis.push_back(axis);
         }
     }
-
+    std::cout << "imp_axis, [";
+    for (int i = 0; i < imp_axis.size(); i++) {
+        if(i < imp_axis.size() - 1) {
+            std::cout << imp_axis[i] << ", ";
+        }
+        else {
+            std::cout << imp_axis[i];
+        }
+    } 
+    std::cout << "]" << std::endl;
     if (imp_axis.empty()) {
+        std::cout << "if not imp_axis" << std::endl;
         return;
     }
 
     int max_axes = std::min(static_cast<int>(imp_axis.size()), static_cast<int>(forest->sample_axis * cube.dim));
+    std::cout << "max_axes, " << max_axes << std::endl;
     std::vector<int> s_axes;
-    s_axes.reserve(max_axes);
+    s_axes.reserve(imp_axis.size());  // Reserve space for all axes
 
-    std::sample(imp_axis.begin(), imp_axis.end(), std::back_inserter(s_axes), max_axes, std::mt19937{std::random_device{}()});
+    // Copy the elements of imp_axis to s_axes
+    s_axes.insert(s_axes.end(), imp_axis.begin(), imp_axis.end());
 
+    // Shuffle the elements in s_axes
+    std::shuffle(s_axes.begin(), s_axes.end(), std::mt19937{std::random_device{}()});
+    s_axes.resize(max_axes);  // Keep only the first max_axes elements
+
+    std::cout << "s_axes, [";
+    for (int i = 0; i < s_axes.size(); i++) {
+        if(i < s_axes.size() - 1) {
+            std::cout << s_axes[i] << ", ";
+        }
+        else {
+            std::cout << s_axes[i];
+        }
+    } 
+    std::cout << "]" << std::endl;
+    
     std::unordered_map<int, std::vector<int>> buckets;
     std::unordered_map<int, double> var_red;
-
+    
     for (int axis : s_axes) {
-        // Histogram hist(point_set.gap[axis] / point_set.count[axis], point_set.count[axis], forest->max_buckets, forest->epsilon);
-        std::vector<int> int_gap(point_set.gap[axis].begin(), point_set.gap[axis].end());
+        std::vector<double> int_gap(point_set.gap[axis].size());
+        for (std::size_t i = 0; i < point_set.gap[axis].size(); ++i) {
+            int_gap[i] = static_cast<double>(point_set.gap[axis][i]) / point_set.count[axis][i];
+        }
+        /*
+        std::cout << "point_set.gap[axis], [";
+        for (int e = 0; e < int_gap.size(); e++) {
+                std::cout << int_gap[e] << " ";
+        }
+        */
         std::vector<int> int_count(point_set.count[axis].begin(), point_set.count[axis].end());
-        Histogram hist(int_gap, int_count, forest->max_buckets, forest->epsilon);// hist.best_split();
-        // var_red[axis] = hist.var_red;
-        // buckets[axis] = hist.buckets;
+        // std::cout << "int_gap.size(), " << int_gap.size() << std::endl;
+        Histogram hist(int_gap, int_count, forest->max_buckets, forest->epsilon);
         Histogram::BestSplit best_split = hist.best_split();
         var_red[axis] = best_split.var_red;
-        buckets[axis] = best_split.buckets;
-    }
+        const std::vector<int>& bucketValues = best_split.buckets;
+        buckets[axis] = bucketValues; // Just assign the vector, no need to copy element by element
+        
+        var_red[axis] = best_split.var_red;
+        buckets[axis] = bucketValues;
+        std::cout << "axis, var_red[axis], buckets[axis]: " << axis << ", " << var_red[axis] << ", [";
+        for (int b : buckets[axis]) {
+            std::cout << b << ", ";
+        }
+        std::cout << "]" << std::endl;
 
+    }
+    
     double max_var_red = std::max_element(var_red.begin(), var_red.end(), [](const auto& a, const auto& b) {
         return a.second < b.second;
     })->second;
@@ -77,11 +119,6 @@ void Node::find_split()
     if (max_var_red <= forest->threshold) {
         return;
     }
-
-    // int split_axis = std::sample(s_axes.begin(), s_axes.end(), std::initializer_list<double>{var_red.begin()->second / std::accumulate(var_red.begin(), var_red.end(), 0.0, [](double sum, const auto& pair) {
-    //                                  return sum + pair.second;
-    //                              })})
-    //                      .front();
     std::vector<int> sample_indices(s_axes.size());
     std::iota(sample_indices.begin(), sample_indices.end(), 0);
     std::shuffle(sample_indices.begin(), sample_indices.end(), std::mt19937{std::random_device{}()});
@@ -94,11 +131,8 @@ void Node::find_split()
     }
 
     for (std::size_t i = 0; i < cube.split_vals.size() + 1; ++i) {
-        // std::array<double, 3> new_start = cube.start;
         std::array<double, 3> new_start = {cube.start[0], cube.start[1], cube.start[2]};
-        // std::array<double, 3> new_end = cube.end;
         std::array<double, 3> new_end = {cube.end[0], cube.end[1], cube.end[2]};
-
 
         if ((i > 0) && (i < cube.split_vals.size())) {
             new_start[split_axis] = cube.split_vals[i - 1];
@@ -114,11 +148,12 @@ void Node::find_split()
         std::unordered_map<std::string, std::variant<std::vector<int>, std::array<double, 3>>> kwargs;
         kwargs["start"] = new_start;
         kwargs["end"] = new_end;
-        // kwargs["indices"] = point_set.indices;
         kwargs["indices"] = std::vector<int>(point_set.indices.begin(), point_set.indices.end());
         kwargs["id"] = id_string;
-        child.emplace_back(depth + 1, forest, kwargs);
-        cube.child.push_back(&child.back().cube);
+        
+        Node child_node(depth + 1, forest, kwargs);
+        child.push_back(child_node);
+        cube.child.push_back(&(child.back().cube));
     }
 }
 
@@ -152,7 +187,7 @@ int Node::compute_leaf_num()
     }
     else {
         return 1;
-    }
+    } 
 }
 
 void Node::compute_split(const std::vector<std::vector<double>>& pts, const std::vector<int>& indices, std::vector<double>& scores)

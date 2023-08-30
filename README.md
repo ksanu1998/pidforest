@@ -8,3 +8,5 @@ The [accompanying paper](https://arxiv.org/abs/1912.03582) shows that PIDForest 
 The associated data files in .mat format are also attached. Many of these datasets have additional citation requests if they are useful in your research.
 
 The current implementation is in Python, we are working on releasing a much faster C++ based implementation soon.
+
+> _NOTE:_ C++ code is still under development. Progress has been made on re-implementing much of the existing classes defined in .py scripts to C++. Currently focussed on building the tree reliably and developing an interface for calling these C++ classes using a Python interface.

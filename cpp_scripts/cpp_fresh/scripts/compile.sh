@@ -11,7 +11,7 @@ echo " >> Compiling Histogram [DONE]"
 echo " >> Compiling Cube"
 g++ -std=c++17 -c ./Cube.cpp -o Cube.o
 echo " >> Compiling Cube [DONE]"
-echo " >> Compiling  Node"
+echo " >> Compiling Node"
 g++ -std=c++17 -c ./Node.cpp -o Node.o
 echo " >> Compiling Node [DONE]"
 echo " >> Compiling PointSet"
@@ -27,7 +27,7 @@ echo " >> Compiling Split"
 g++ -std=c++17 -c ./Split.cpp -o Split.o
 echo " >> Compiling Split [DONE]"
 echo " >> Compiling main"
-g++ -std=c++17 -c ./main.cpp -o main.o
+g++ -std=c++17 -c ./main_debug.cpp -o main.o
 echo " >> Compiling main [DONE]"
 echo " >> Linking files and creating executable"
 g++ -std=c++17 -o pidforest TimeSeries.o Histogram.o Cube.o Node.o PointSet.o Forest.o HistogramMemory.o Split.o main.o

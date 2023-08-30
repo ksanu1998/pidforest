@@ -20,10 +20,10 @@ public:
     void compute_split(const std::vector<std::vector<double>>& pts, const std::vector<int>& indices, std::vector<double>& scores);
     void compute_density(const std::vector<int>& indices);
     int compute_leaf_num();
-    // Other member functions...
-
+    
 private:
     int depth;
+    int dim;
     std::vector<int> id_string;
     Cube cube;
     PointSet point_set;

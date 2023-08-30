@@ -23,7 +23,7 @@ public:
     std::vector<Node> tree;
     std::vector<double> n_leaves;
 
-public:
+// public:
     int dim;
     int size;
     std::vector<std::vector<double>> points;

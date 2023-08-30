@@ -16,7 +16,7 @@ public:
     std::vector<double> split_vals;
     double vol;
 
-    Cube(Node* n, const std::vector<double>& s, const std::vector<double>& e);
+    Cube(Node* n, const int d, const std::vector<double>& s, const std::vector<double>& e);
 
     std::vector<int> filter_indices(const std::vector<int>& indices);
     std::vector<std::vector<int>> split_indices(const std::vector<std::vector<double>>& pts, const std::vector<int>& indices);
