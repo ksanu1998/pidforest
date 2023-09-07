@@ -191,6 +191,7 @@ void Node::compute_density(const std::vector<int>& indices)
         return;
     }
     density = log(num) - cube.vol;
+    std::cout << "density, " << density << std::endl;
     if (!child.empty()) {
         std::vector<std::vector<int>> index_split = cube.split_indices(forest->points, indices);
         for (std::size_t i = 0; i < child.size(); ++i) {
