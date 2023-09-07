@@ -100,7 +100,7 @@ void Forest::fit(const std::vector<std::vector<double>>& pts) {
         tree.push_back(root_node);
         n_leaves[i] = root_node.compute_leaf_num();
         std::cout << "\n >> Building tree #" << i + 1 << "/" << n_trees <<" [DONE]\n";
-        // if(i == 0) {
+        // if(i == 4) {
         //     std::exit(1);
         // }
     }

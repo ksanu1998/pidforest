@@ -21,7 +21,7 @@ int main() {
     double sample_axis = 1.0;
     double threshold = 0.0;
 
-    
+    streambuf* orig_buf = cout.rdbuf();
     std::cout << "\n >> PIDForest Parameters\n";
     std::cout << "\n >> n_trees:" << n_trees << "\n";
     std::cout << "\n >> max_samples:" << max_samples << "\n";
@@ -43,7 +43,7 @@ int main() {
     };
     Forest mForest(kwargs);
     
-    string dataset = "machine_temperature_system_failure";  // Set your dataset name here
+    string dataset = "nyc_taxi";  // Set your dataset name here
     
     // Read the CSV file
     string filename = "../data/numenta/" + dataset + ".csv";
@@ -79,6 +79,7 @@ int main() {
     }
 
     // Shingle and transpose the data
+    // Shingle works correctly -- write tests to compare C++ and Python outputs of this function
     int shingleSize = 10;
     vector<vector<double>> X = TimeSeries::shingle(value, shingleSize);
     X = TimeSeries::transpose(X);
@@ -86,6 +87,7 @@ int main() {
     // Print the shingled and transposed data
     std::cout << "\n >> There are " << X.size() << " shingles \n";
     
+    /*
     int shingle_count = 0;
     for (const auto& row : X) {
         shingle_count++;
@@ -96,7 +98,8 @@ int main() {
         }
         cout << endl;
     }
-    
+    */
+
     std::cout << "\n >> Running PIDForest algorithm on " << dataset << " dataset\n";
 
     vector<vector<double>> pts;  // Provide your data here
@@ -113,18 +116,25 @@ int main() {
     vector<double> our_scores;
     double err = 0.1;
     double pct = 0.0;
+    // cout.rdbuf(NULL);
+    // cout.rdbuf(orig_buf);
+    
     std::cout << "\n >> Running Forest::predict\n";
     
     tie(indices, outliers, scores, pst, our_scores) = mForest.predict(pts, err, pct);
     std::cout << "\n >> Forest::predict DONE\n";
     
     // Output the results
+    /*
     std::cout << "\n >> Printing outputs Forest::predict\n";
     cout << "\n >> Indices: ";
+    cout << "\n >> " << indices.size() << endl;
+
     for (int idx : indices) {
-        cout << idx << " ";
+        cout << idx << "\n";
     }
-    cout << endl;
+    */
+    /*
     
     // Print the outliers and their scores
     for (const auto& entry : outliers) {
@@ -161,6 +171,6 @@ int main() {
         cout << val << " ";
     }
     cout << endl;
-    
+    */
     return 0;
 }

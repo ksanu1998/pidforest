@@ -8,27 +8,26 @@ PointSet::PointSet(Node* n, const std::unordered_set<int>& inds) : node(n), indi
     val.resize(dim);
     count.resize(dim);
     gap.resize(dim);
-    std::cout << "node->forest->dim, " << dim << std::endl;
+    // std::cout << "node->forest->dim, " << dim << std::endl;
     for (int axis = 0; axis < dim; ++axis) {
         std::vector<double> values;
         for (int index : indices) {
             double value = node->forest->points[index][axis];
             values.push_back(value);
         }
-
         std::sort(values.begin(), values.end());
         auto unique_end = std::unique(values.begin(), values.end());
         values.erase(unique_end, values.end());
-
+        
         val[axis] = values;
         count[axis].resize(values.size(), 1);
-
         for (int index : indices) {
-            double value = node->forest->points[axis][index];
+            double value = node->forest->points[index][axis];
             auto it = std::lower_bound(values.begin(), values.end(), value);
             int idx = std::distance(values.begin(), it);
             ++count[axis][idx];
         }
+        
         /*
         std::cout << "count:" << std::endl;
         std::cout << "[" << std::endl;
@@ -47,14 +46,21 @@ PointSet::PointSet(Node* n, const std::unordered_set<int>& inds) : node(n), indi
         if (values.size() <= 1) {
             gap[axis] = {0.0};
         } else {
+            // std::cout << ">>>>>>>>>>>>>>>>PointSet[BET1]" << std::endl;
+            // std::cout << gap[axis].size() << ", " << values.size() << std::endl;
             gap[axis].resize(values.size());
+            // std::cout << ">>>>>>>>>>>>>>>>PointSet[BET2]" << std::endl;
             gap[axis][0] = (values[1] - values[0]) / 2;
+            // std::cout << ">>>>>>>>>>>>>>>>PointSet[BET3]" << std::endl;
             gap[axis][values.size() - 1] = (values[values.size() - 1] - values[values.size() - 2]) / 2;
+            // std::cout << ">>>>>>>>>>>>>>>>PointSet[BET4]" << std::endl;
             for (int i = 1; i < values.size() - 1; ++i) {
                 gap[axis][i] = (values[i + 1] - values[i - 1]) / 2;
             }
+            // std::cout << ">>>>>>>>>>>>>>>>PointSet[BET][DONE]" << std::endl;
         }
     }
+    // std::cout << ">>>>>>>>>>>>>>>>PointSet[DONE]" << std::endl;
 }
 
 int PointSet::size() const {

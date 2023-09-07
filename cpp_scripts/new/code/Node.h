@@ -15,7 +15,7 @@
 
 class Node {
 public:
-    Node(int depth, Forest* forest, const std::unordered_map<std::string, std::variant<std::vector<int>, std::array<double, 3>>>& kwargs);
+    Node(int depth, Forest* forest, const std::unordered_map<std::string, std::variant<std::vector<int>, std::vector<double>>>& kwargs);
     Forest* forest;
     void compute_split(const std::vector<std::vector<double>>& pts, const std::vector<int>& indices, std::vector<double>& scores);
     void compute_density(const std::vector<int>& indices);

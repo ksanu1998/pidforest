@@ -7,7 +7,7 @@
 #include <random>
 #include <algorithm>
 
-Node::Node(int depth, Forest* forest, const std::unordered_map<std::string, std::variant<std::vector<int>, std::array<double, 3>>>& kwargs)
+Node::Node(int depth, Forest* forest, const std::unordered_map<std::string, std::variant<std::vector<int>, std::vector<double>>>& kwargs)
     : depth(depth), forest(forest), 
       point_set(this, std::unordered_set<int>()), 
       cube(this, int(), std::vector<double>(), std::vector<double>())
@@ -18,30 +18,39 @@ Node::Node(int depth, Forest* forest, const std::unordered_map<std::string, std:
         point_set = PointSet(this, std::unordered_set<int>(std::get<std::vector<int>>(kwargs.at("indices")).begin(), std::get<std::vector<int>>(kwargs.at("indices")).end()));
     }
     else {
+        // std::cout << ">>>>>>>>>>>>>>>>Nodehere" << std::endl;
+
         id_string = std::get<std::vector<int>>(kwargs.at("id"));
-        std::array<double, 3> startArray = std::get<std::array<double, 3>>(kwargs.at("start"));
-        std::array<double, 3> endArray = std::get<std::array<double, 3>>(kwargs.at("end"));
+        std::vector<double> startArray = std::get<std::vector<double>>(kwargs.at("start"));
+        std::vector<double> endArray = std::get<std::vector<double>>(kwargs.at("end"));
         std::vector<double> startVector(startArray.begin(), startArray.end());
         std::vector<double> endVector(endArray.begin(), endArray.end());
         cube = Cube(this, forest->dim, startVector, endVector);
-        point_set = PointSet(this, std::unordered_set<int>(std::get<std::vector<int>>(kwargs.at("indices")).begin(), std::get<std::vector<int>>(kwargs.at("indices")).end())); 
+        std::vector<int> filtered_indices = cube.filter_indices(std::vector<int>(std::get<std::vector<int>>(kwargs.at("indices")).begin(), std::get<std::vector<int>>(kwargs.at("indices")).end()));
+        std::unordered_set<int> filtered_indices_set(filtered_indices.begin(), filtered_indices.end());
+        // std::cout << ">>>>>>>>>>>>>>>>Nodehere[BET]" << std::endl;
+        point_set = PointSet(this, filtered_indices_set); 
+        // point_set = PointSet(this, std::unordered_set<int>(std::get<std::vector<int>>(kwargs.at("indices")).begin(), std::get<std::vector<int>>(kwargs.at("indices")).end())); 
+        // std::cout << ">>>>>>>>>>>>>>>>Nodehere[DONE]" << std::endl;
     }
     density = -1;
     child = std::vector<Node>();
     if ((depth < forest->max_depth) && (point_set.indices.size() > 1)) {
+        // std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>depth, point_set.indices.size(): " << depth << ", " << point_set.indices.size() << std::endl;
         find_split();
     }    
 }
 
 void Node::find_split()
 {
-    std::cout << "cube.dim, " << cube.dim << std::endl;
+    // std::cout << "cube.dim, " << cube.dim << std::endl;
     std::vector<int> imp_axis;
     for (int axis = 0; axis < cube.dim; ++axis) {
         if (point_set.val[axis].size() > 1) {
             imp_axis.push_back(axis);
         }
     }
+    /*
     std::cout << "imp_axis, [";
     for (int i = 0; i < imp_axis.size(); i++) {
         if(i < imp_axis.size() - 1) {
@@ -51,14 +60,15 @@ void Node::find_split()
             std::cout << imp_axis[i];
         }
     } 
-    std::cout << "]" << std::endl;
+    */
+    // std::cout << "]" << std::endl;
     if (imp_axis.empty()) {
-        std::cout << "if not imp_axis" << std::endl;
+        // std::cout << "if not imp_axis" << std::endl;
         return;
     }
 
     int max_axes = std::min(static_cast<int>(imp_axis.size()), static_cast<int>(forest->sample_axis * cube.dim));
-    std::cout << "max_axes, " << max_axes << std::endl;
+    // std::cout << "max_axes, " << max_axes << std::endl;
     std::vector<int> s_axes;
     s_axes.reserve(imp_axis.size());  // Reserve space for all axes
 
@@ -68,7 +78,7 @@ void Node::find_split()
     // Shuffle the elements in s_axes
     std::shuffle(s_axes.begin(), s_axes.end(), std::mt19937{std::random_device{}()});
     s_axes.resize(max_axes);  // Keep only the first max_axes elements
-
+    /*
     std::cout << "s_axes, [";
     for (int i = 0; i < s_axes.size(); i++) {
         if(i < s_axes.size() - 1) {
@@ -79,7 +89,7 @@ void Node::find_split()
         }
     } 
     std::cout << "]" << std::endl;
-    
+    */
     std::unordered_map<int, std::vector<int>> buckets;
     std::unordered_map<int, double> var_red;
     
@@ -104,11 +114,13 @@ void Node::find_split()
         
         var_red[axis] = best_split.var_red;
         buckets[axis] = bucketValues;
+        /*
         std::cout << "axis, var_red[axis], buckets[axis]: " << axis << ", " << var_red[axis] << ", [";
         for (int b : buckets[axis]) {
             std::cout << b << ", ";
         }
         std::cout << "]" << std::endl;
+        */
 
     }
     
@@ -131,9 +143,18 @@ void Node::find_split()
     }
 
     for (std::size_t i = 0; i < cube.split_vals.size() + 1; ++i) {
-        std::array<double, 3> new_start = {cube.start[0], cube.start[1], cube.start[2]};
-        std::array<double, 3> new_end = {cube.end[0], cube.end[1], cube.end[2]};
-
+        // std::cout << "cube.split_vals.size() + 1 :  " << cube.split_vals.size() + 1 << std::endl;
+        std::vector<double> new_start = cube.start; // = {cube.start[0], cube.start[1], cube.start[2]};
+        // for (std::size_t i = 0; i < cube.start.size(); ++i) {
+        //     new_start[i] = cube.start[i];
+        // }
+        // std::cout << "new_start.size: " << new_start.size() << std::endl;
+        std::vector<double> new_end = cube.end; // = {cube.end[0], cube.end[1], cube.end[2]};
+        // for (std::size_t i = 0; i < cube.end.size(); ++i) {
+        //     new_end[i] = cube.end[i];
+        // }
+        // std::cout << "new_end.size: " << new_end.size() << std::endl;
+        // std::cout << ">>>>>>>>>>>>>>>>here" << std::endl;
         if ((i > 0) && (i < cube.split_vals.size())) {
             new_start[split_axis] = cube.split_vals[i - 1];
             new_end[split_axis] = cube.split_vals[i];
@@ -144,8 +165,10 @@ void Node::find_split()
         else {  // i == cube.split_vals.size()
             new_start[split_axis] = cube.split_vals.back();
         }
+        // std::cout << ">>>>>>>>>>>>>>>>here[DONE]" << std::endl;
+        
 
-        std::unordered_map<std::string, std::variant<std::vector<int>, std::array<double, 3>>> kwargs;
+        std::unordered_map<std::string, std::variant<std::vector<int>, std::vector<double>>> kwargs;
         kwargs["start"] = new_start;
         kwargs["end"] = new_end;
         kwargs["indices"] = std::vector<int>(point_set.indices.begin(), point_set.indices.end());

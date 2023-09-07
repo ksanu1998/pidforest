@@ -4,7 +4,7 @@
 
 Cube::Cube(Node* n, int d, const std::vector<double>& s, const std::vector<double>& e)
     : node(n), dim(d), start(s), end(e) {
-    // dim = s.size();
+    dim = s.size();
     split_axis = -1;
     vol = 0;
     for (int i = 0; i < dim; ++i) {
@@ -17,7 +17,9 @@ std::vector<int> Cube::filter_indices(const std::vector<int>& indices) {
     for (int i : indices) {
         bool in_lb = true;
         bool in_ub = true;
-        for (int j = 0; j < dim; ++j) {
+        // std::cout << ">>>>>>>>>>>>>>>>>>dim: " << dim << std::endl;
+            for (int j = 0; j < dim; ++j) {
+            // std::cout << ">>>>>>>>>>>>>>>>>>bool: " << (node->forest->points[j][i] < start[j] || node->forest->points[j][i] >= end[j]) << std::endl;
             if (node->forest->points[j][i] < start[j] || node->forest->points[j][i] >= end[j]) {
                 in_lb = false;
                 in_ub = false;

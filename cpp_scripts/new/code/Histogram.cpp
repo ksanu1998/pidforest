@@ -71,25 +71,31 @@ Histogram::BestSplit Histogram::best_split() const {
         bestsplit.opt = 0;
         bestsplit.var_red = 0;
         bestsplit.buckets = std::vector<int>();
-        std::cout << "NULL" << std::endl;
+        // std::cout << "NULL" << std::endl;
         return bestsplit;
     }
     // std::cout << "NOT NULL" << std::endl;
     std::vector<double> err_red(max_buckets - 1);
-    std::cout << "err_red, var_red: [";
+    
+    // std::cout << "err_red, var_red: [";
     for (int i = 1; i < max_buckets; i++) {
         // std::cout << "err[0], err[i], err[0] - err[i]: " << err[0] << ", " << err[i] << ", " << err[0] - err[i] << std::endl;
         err_red[i - 1] = err[0] - err[i];
-        std::cout << err_red[i - 1] << " ";
+        // std::cout << err_red[i - 1] << " ";
     }
-    std::cout << "], ";
+    // std::cout << "], ";
+    
     double max_err_red = *std::max_element(err_red.begin(), err_red.end());
+    // std::cout << "max_err_red, " << max_err_red << std::endl;
     double var_red = max_err_red / err[0];
-    std::cout <<  var_red << std::endl;
+    // std::cout << "var_red, " << var_red << std::endl;
+    
+    // std::cout <<  var_red << std::endl;
     if (var_red < 0) {
         var_red = 0;
-        std::cout << "var_red < 0" << std::endl;
+        // std::cout << "var_red < 0" << std::endl;
     }
+    
     int opt = std::distance(err_red.begin(), std::max_element(err_red.begin(), err_red.end())) + 2;
     // std::cout << "opt, " << opt << std::endl;
     // std::cout << "compute_buckets" << std::endl;
@@ -100,11 +106,14 @@ Histogram::BestSplit Histogram::best_split() const {
     bestsplit.var_red = var_red;
     bestsplit.buckets = buckets;
     // std::cout << "var_red, " << var_red << std::endl;
+    // exit(1);
+    /*
     std::cout << "buckets, [";
     for (int b = 0; b < buckets.size(); b++) {
         std::cout << buckets[b] << " ";
     }
     std::cout << "]" << std::endl;
+    */
     return bestsplit;
     // std::cout << "***** Histogram::best_split() [DONE]*****" << std::endl;
     
