@@ -194,9 +194,14 @@ int main() {
     std::cout << "\n >> Forest::predict DONE\n";
     
     // Negate all values in the our_scores vector
+    // cout << "our_score" << endl;
     for (double& score : our_scores) {
-        score = -score;
+        if (score < 0){
+            score = -score;
+        }
+        // cout << score << " ";
     }
+    // cout << endl;
     int t1 = X.size();
     std::vector<int> y_slice(label.begin(), label.begin() + t1);
     calculatePrecisionRecallThresholds(y_slice, our_scores);
@@ -241,12 +246,12 @@ int main() {
         cout << "\n >> PST for index " << idx << ": " << pstValue << endl;
     }
     
+    */
     // Print the our_scores values
     cout << "\n >> Our Scores: ";
     for (double val : our_scores) {
         cout << val << " ";
     }
     cout << endl;
-    */
     return 0;
 }

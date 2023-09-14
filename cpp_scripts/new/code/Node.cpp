@@ -43,7 +43,7 @@ Node::Node(int depth, Forest* forest, const std::unordered_map<std::string, std:
 
 void Node::find_split()
 {
-    // std::cout << "cube.dim, " << cube.dim << std::endl;
+    std::cout << "cube.dim, " << cube.dim << std::endl;
     std::vector<int> imp_axis;
     for (int axis = 0; axis < cube.dim; ++axis) {
         if (point_set.val[axis].size() > 1) {
@@ -78,7 +78,7 @@ void Node::find_split()
     // Shuffle the elements in s_axes
     std::shuffle(s_axes.begin(), s_axes.end(), std::mt19937{std::random_device{}()});
     s_axes.resize(max_axes);  // Keep only the first max_axes elements
-    /*
+    
     std::cout << "s_axes, [";
     for (int i = 0; i < s_axes.size(); i++) {
         if(i < s_axes.size() - 1) {
@@ -89,7 +89,7 @@ void Node::find_split()
         }
     } 
     std::cout << "]" << std::endl;
-    */
+    
     std::unordered_map<int, std::vector<int>> buckets;
     std::unordered_map<int, double> var_red;
     
@@ -114,13 +114,13 @@ void Node::find_split()
         
         var_red[axis] = best_split.var_red;
         buckets[axis] = bucketValues;
-        /*
+        
         std::cout << "axis, var_red[axis], buckets[axis]: " << axis << ", " << var_red[axis] << ", [";
         for (int b : buckets[axis]) {
             std::cout << b << ", ";
         }
         std::cout << "]" << std::endl;
-        */
+        
 
     }
     
