@@ -112,7 +112,7 @@ int main() {
     };
     Forest mForest(kwargs);
     
-    string dataset = "cpu_utilization_asg_misconfiguration";  // [nyc_taxi, ambient_temperature_system_failure, machine_temperature_system_failure, cpu_utilization_asg_misconfiguration] Set your dataset name here
+    string dataset = "nyc_taxi";  // [nyc_taxi, ambient_temperature_system_failure, machine_temperature_system_failure, cpu_utilization_asg_misconfiguration] Set your dataset name here
     
     // Read the CSV file
     string filename = "../data/numenta/" + dataset + ".csv";
@@ -248,10 +248,10 @@ int main() {
     
     */
     // Print the our_scores values
-    cout << "\n >> Our Scores: ";
-    for (double val : our_scores) {
-        cout << val << " ";
-    }
-    cout << endl;
+    // cout << "\n >> Our Scores: ";
+    // for (double val : our_scores) {
+    //     cout << val << " ";
+    // }
+    // cout << endl;
     return 0;
 }

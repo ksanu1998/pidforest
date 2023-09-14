@@ -86,16 +86,24 @@ void Forest::fit(const std::vector<std::vector<double>>& pts) {
     std::cout << "]" << std::endl;
     std::vector<int> sample(std::min(size, max_depth * 200));
     std::iota(sample.begin(), sample.end(), 0);
-    std::shuffle(sample.begin(), sample.end(), std::default_random_engine(17));
-
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(sample.begin(), sample.end(), g);
+    // std::shuffle(sample.begin(), sample.end(), std::default_random_engine(17));
     std::cout << "\n >> Building trees\n";
     for (int i = 0; i < n_trees; ++i) {
         
         std::vector<int> indices(max_samples);
         std::iota(indices.begin(), indices.end(), 0);
-        std::shuffle(indices.begin(), indices.end(), std::default_random_engine(17));
+        // Shuffle the vector to get random order
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(indices.begin(), indices.end(), g);
+
+        // std::shuffle(indices.begin(), indices.end(), std::default_random_engine(17));
         std::cout << "\n >> Building tree #" << i + 1<< "/" << n_trees <<"\n";
         Node root_node(0, this, {{"indices", indices}});
+        std::cout << "size of sample: " << sample.size() << std::endl; 
         root_node.compute_density(sample);
         tree.push_back(root_node);
         n_leaves[i] = root_node.compute_leaf_num();
@@ -144,12 +152,12 @@ Forest::predict(const std::vector<std::vector<double>>& pts, double err, double 
                 all_zeroes = 0;
             }
         }
-        if (all_zeroes) {
-            std::cout << "all zeroes" << std::endl;
-        }
-        else {
-            std::cout << "score exists" << std::endl;
-        }
+        // if (all_zeroes) {
+        //     std::cout << "all zeroes" << std::endl;
+        // }
+        // else {
+        //     std::cout << "score exists" << std::endl;
+        // }
         std::sort(column_scores.begin(), column_scores.end());
         int index = static_cast<int>(pct / 100.0 * (n_trees - 1)); // since pct = 0, this always sets index to 0 (min)
         min_score[i] = column_scores[index];
@@ -182,7 +190,12 @@ Forest::predict(const std::vector<std::vector<double>>& pts, double err, double 
     }
     std::cout << "min_score" << std::endl;
     for (int i = 0; i < min_score.size(); i++) {
-        std::cout << min_score[i] << " ";
+        if (min_score[i] < -500) {
+            std::cout << "xxx " << min_score[i] << std::endl;
+        }
+        else {
+                std::cout << min_score[i] << std::endl;
+        }
     }
     std::cout << std::endl << std::endl;
     return std::make_tuple(top_indices, anom_pts, anom_scores, anom_pct, min_score);
