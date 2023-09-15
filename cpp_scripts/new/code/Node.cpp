@@ -13,32 +13,26 @@ Node::Node(int depth, Forest* forest, const std::unordered_map<std::string, std:
       cube(this, int(), std::vector<double>(), std::vector<double>())
 {
     if (depth == 0) {
-        std::cout << ">>>>>>>>> root node <<<<<<<<<<<<<" << std::endl;
+        std::cout << ">>>>>>>>>>>>> root node <<<<<<<<<<<<<" << std::endl;
         id_string = {0};
         cube = Cube(this, forest->dim, forest->start, forest->end);
         point_set = PointSet(this, std::unordered_set<int>(std::get<std::vector<int>>(kwargs.at("indices")).begin(), std::get<std::vector<int>>(kwargs.at("indices")).end()));
     }
     else {
-        // std::cout << ">>>>>>>>>>>>>>>>Nodehere" << std::endl;
-
+        std::cout << ">>>>>>>>>>>>> recursive node <<<<<<<<<<<<<" << std::endl;
         id_string = std::get<std::vector<int>>(kwargs.at("id"));
         std::vector<double> startArray = std::get<std::vector<double>>(kwargs.at("start"));
         std::vector<double> endArray = std::get<std::vector<double>>(kwargs.at("end"));
         std::vector<double> startVector(startArray.begin(), startArray.end());
         std::vector<double> endVector(endArray.begin(), endArray.end());
         cube = Cube(this, forest->dim, startVector, endVector);
-        std::cout << ">>>>>>>>> recursive node <<<<<<<<<<<<<" << std::endl;
         std::vector<int> filtered_indices = cube.filter_indices(std::vector<int>(std::get<std::vector<int>>(kwargs.at("indices")).begin(), std::get<std::vector<int>>(kwargs.at("indices")).end()));
         std::unordered_set<int> filtered_indices_set(filtered_indices.begin(), filtered_indices.end());
-        // std::cout << ">>>>>>>>>>>>>>>>Nodehere[BET]" << std::endl;
         point_set = PointSet(this, filtered_indices_set); 
-        // point_set = PointSet(this, std::unordered_set<int>(std::get<std::vector<int>>(kwargs.at("indices")).begin(), std::get<std::vector<int>>(kwargs.at("indices")).end())); 
-        // std::cout << ">>>>>>>>>>>>>>>>Nodehere[DONE]" << std::endl;
     }
     density = -1;
     child = std::vector<Node>();
     if ((depth < forest->max_depth) && (point_set.indices.size() > 1)) {
-        // std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>depth, point_set.indices.size(): " << depth << ", " << point_set.indices.size() << std::endl;
         find_split();
     }    
 }
@@ -52,34 +46,16 @@ void Node::find_split()
             imp_axis.push_back(axis);
         }
     }
-    /*
-    std::cout << "imp_axis, [";
-    for (int i = 0; i < imp_axis.size(); i++) {
-        if(i < imp_axis.size() - 1) {
-            std::cout << imp_axis[i] << ", ";
-        }
-        else {
-            std::cout << imp_axis[i];
-        }
-    } 
-    */
-    // std::cout << "]" << std::endl;
     if (imp_axis.empty()) {
-        // std::cout << "if not imp_axis" << std::endl;
         return;
     }
 
     int max_axes = std::min(static_cast<int>(imp_axis.size()), static_cast<int>(forest->sample_axis * cube.dim));
-    // std::cout << "max_axes, " << max_axes << std::endl;
     std::vector<int> s_axes;
-    s_axes.reserve(imp_axis.size());  // Reserve space for all axes
-
-    // Copy the elements of imp_axis to s_axes
+    s_axes.reserve(imp_axis.size()); 
     s_axes.insert(s_axes.end(), imp_axis.begin(), imp_axis.end());
-
-    // Shuffle the elements in s_axes
     std::shuffle(s_axes.begin(), s_axes.end(), std::mt19937{std::random_device{}()});
-    s_axes.resize(max_axes);  // Keep only the first max_axes elements
+    s_axes.resize(max_axes);
     
     std::cout << "s_axes, [";
     for (int i = 0; i < s_axes.size(); i++) {
@@ -100,14 +76,7 @@ void Node::find_split()
         for (std::size_t i = 0; i < point_set.gap[axis].size(); ++i) {
             int_gap[i] = static_cast<double>(point_set.gap[axis][i]) / point_set.count[axis][i];
         }
-        /*
-        std::cout << "point_set.gap[axis], [";
-        for (int e = 0; e < int_gap.size(); e++) {
-                std::cout << int_gap[e] << " ";
-        }
-        */
         std::vector<int> int_count(point_set.count[axis].begin(), point_set.count[axis].end());
-        // std::cout << "int_gap.size(), " << int_gap.size() << std::endl;
         Histogram hist(int_gap, int_count, forest->max_buckets, forest->epsilon);
         Histogram::BestSplit best_split = hist.best_split();
         var_red[axis] = best_split.var_red;
@@ -122,8 +91,6 @@ void Node::find_split()
             std::cout << b << ", ";
         }
         std::cout << "]" << std::endl;
-        
-
     }
     
     double max_var_red = std::max_element(var_red.begin(), var_red.end(), [](const auto& a, const auto& b) {
@@ -144,37 +111,21 @@ void Node::find_split()
         if (buckets[split_axis][i] != 0) {
             cube.split_vals[i] = (point_set.val[split_axis][buckets[split_axis][i] - 1] + point_set.val[split_axis][buckets[split_axis][i]]) / 2;
         }
-        // cube.split_vals[i] = (point_set.val[split_axis][buckets[split_axis][i] - 1] + point_set.val[split_axis][buckets[split_axis][i]]) / 2;
     }
 
     for (std::size_t i = 0; i < cube.split_vals.size() + 1; ++i) {
-        // std::cout << "cube.split_vals.size() + 1 :  " << cube.split_vals.size() + 1 << std::endl;
-        std::vector<double> new_start = cube.start; // = {cube.start[0], cube.start[1], cube.start[2]};
-        // for (std::size_t i = 0; i < cube.start.size(); ++i) {
-        //     new_start[i] = cube.start[i];
-        // }
-        // std::cout << "new_start.size: " << new_start.size() << std::endl;
-        std::vector<double> new_end = cube.end; // = {cube.end[0], cube.end[1], cube.end[2]};
-        // for (std::size_t i = 0; i < cube.end.size(); ++i) {
-        //     new_end[i] = cube.end[i];
-        // }
-        // std::cout << "new_end.size: " << new_end.size() << std::endl;
-        // std::cout << ">>>>>>>>>>>>>>>>here" << std::endl;
+        std::vector<double> new_start = cube.start;
+        std::vector<double> new_end = cube.end;
         if ((i > 0) && (i < cube.split_vals.size())) {
             new_start[split_axis] = cube.split_vals[i - 1];
             new_end[split_axis] = cube.split_vals[i];
         }
         else if (i == 0) {
             new_end[split_axis] = cube.split_vals[0];
-            std::cout << "Debug val: " << cube.split_vals[0] << std::endl;
         }
-        else {  // i == cube.split_vals.size()
-            // new_start[split_axis] = cube.split_vals.back();
+        else {
             new_start[split_axis] = cube.split_vals[cube.split_vals.size() - 1];
         }
-        // std::cout << ">>>>>>>>>>>>>>>>here[DONE]" << std::endl;
-        
-
         std::unordered_map<std::string, std::variant<std::vector<int>, std::vector<double>>> kwargs;
         kwargs["start"] = new_start;
         kwargs["end"] = new_end;
@@ -190,24 +141,14 @@ void Node::find_split()
 void Node::compute_density(const std::vector<int>& indices)
 {
     int num = indices.size();
-    std::cout << "size of sample: " << indices.size() << std::endl; 
     if (num == 0) {
         density = 0;
         child.clear();
         cube.child.clear();
         cube.split_axis = -1;
-        std::cout << "density, " << density << std::endl;
         return;
     }
     density = log(num) - cube.vol;
-    if(density < -500) {
-        std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Anomalous density: " << density << ", num: " << num << ", log(num): " << log(num) << ", cube.vol: " << cube.vol << std::endl;
-        // exit(1);
-    }
-    else {
-        std::cout << "Correct density: " << density << ", num: " << num << ", log(num): " << log(num) << ", cube.vol: " << cube.vol << std::endl;
-    }
-    std::cout << "density, " << density << std::endl;
     if (!child.empty()) {
         std::vector<std::vector<int>> index_split = cube.split_indices(forest->points, indices);
         std::cout << "index_split (sizes) [NODE]: [";
@@ -216,7 +157,6 @@ void Node::compute_density(const std::vector<int>& indices)
         }
         std::cout << "]" << std::endl;
         for (std::size_t i = 0; i < child.size(); ++i) {
-            // std::cout << "size of index_split[i], " << index_split[i].size() << std::endl;
             child[i].compute_density(index_split[i]);
         }
     }
@@ -239,7 +179,6 @@ int Node::compute_leaf_num()
 void Node::compute_split(const std::vector<std::vector<double>>& pts, const std::vector<int>& indices, std::vector<double>& scores)
 {
     if (!child.empty()) {
-        std::cout << "[HAS CHILD]" << std::endl;
         std::vector<std::vector<int>> index_split = cube.split_indices(pts, indices);
         for (std::size_t i = 0; i < child.size(); ++i) {
             if (!index_split[i].empty()) {
@@ -249,7 +188,6 @@ void Node::compute_split(const std::vector<std::vector<double>>& pts, const std:
     }
     else {
         for (int index : indices) {
-            std::cout << "[LEAF] density " << density << std::endl;
             scores[index] = density;
         }
     }
