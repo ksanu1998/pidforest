@@ -2,7 +2,7 @@ import numpy as np
 import math
 
 
-@profile
+
 def compress(arr, eps):
     min_val = np.min(arr[np.nonzero(arr)])
     max_val = np.max(arr[np.nonzero(arr)])
@@ -15,7 +15,7 @@ def compress(arr, eps):
 
 class Histogram:
 
-    @profile
+    
     def __init__(self, val, count, max_buckets, eps):
         self.num = len(val)
         self.max_buckets = max_buckets
@@ -23,8 +23,10 @@ class Histogram:
         self.count = count
         self.eps = eps
         self.err, self.b_values = approx_buckets(val, count, max_buckets, eps)
-
-    @profile
+        # print("err, ", self.err)
+        # print("num, ", self.num)
+        # print("b_values, ", self.b_values)
+    
     def __str__(self):
         str_val = ""
         for i in range(self.max_buckets):
@@ -35,29 +37,32 @@ class Histogram:
             str_val += "\n"
         return str_val
 
-    @profile
+    
     def test(self):
-        print(str(self))
+        # print(str(self))
         for i in range(1, self.max_buckets):
             print(self.compute_buckets(i))
-        print("Best Buckets: ")
-        print(self.best_split())
+        # print("Best Buckets: ")
+        # print(self.best_split())
 
-    @profile
+    
     def best_split(self):
         # print("Forest -> fit -> Node -> Histogram -> best_split")
+        # print("self.err[0], ", self.err[0])
         if self.err[0] == 0:
             return 0, 0, []
         err_red = [(self.err[0] - self.err[i]) for i in range(1, self.max_buckets)]
         var_red = np.max(err_red) / self.err[0]
+        # print("err_red, var_red: ", err_red, var_red)
         if var_red < 0:
-            print("error: var_red is", var_red)
+            # print("error: var_red is", var_red)
             var_red = 0
         opt = np.argmax(err_red) + 2
+        # print("opt, ", opt)
         buckets = self.compute_buckets(opt)
         return opt, var_red, buckets[1:]
 
-    @profile
+    
     def compute_buckets(self, num_buckets):
         buckets = []
         end = self.num - 1
@@ -71,7 +76,7 @@ class Histogram:
         return np.flip(buckets, axis=0)
 
 
-@profile
+
 def two_split(val, count):
     p_count = np.cumsum(count)
     s_count = p_count[-1] - p_count
@@ -80,7 +85,7 @@ def two_split(val, count):
     scores = (p_sum**2)[:-1]/p_count[:-1] + (s_sum**2)[:-1]/s_count[:-1]
     return scores
 
-@profile
+
 def approx_buckets(arr, count, max_buckets, eps):
     """params:
     vals: the array of values
@@ -98,6 +103,11 @@ def approx_buckets(arr, count, max_buckets, eps):
     3) sum until b
     4) sum of squares until b
     5) total count until b"""
+    # print("arr, count, max_buckets, eps")
+    # print("arr, ", arr)
+    # print(count)
+    # print(max_buckets)
+    # print(eps)
     err_a = np.zeros(max_buckets) - 1
     cur_err = np.zeros(max_buckets)
     b_values = [{} for _ in range(max_buckets)]
@@ -130,57 +140,6 @@ def approx_buckets(arr, count, max_buckets, eps):
                 err_a[k] = cur_err[k]
             else:
                 del b_values[k][j - 1]
+    # print("cur_err, b_values, ", cur_err, b_values)
+    # exit()
     return cur_err, b_values
-
-'''
-def approx_buckets(arr, count, max_buckets, eps):
-    """params:
-    vals: the array of values
-    counts: the array of counts
-    max_buckets: the number of buckets
-    eps: an approximation parameter
-    returns:
-     1) an array cur_err[k], which gives the error of the best histogram with k buckets.
-     2) a dictionary b_values.
-    b_values stores a collection of intervals for each level k where 0 <= k < B. It is indexed by
-    the level k and the endpoint b of an interval (a,b) at level k.
-    The value is a 4 tuple:
-    1) a: start point of the interval
-    2) ApxError(b,k) for that point.
-    3) sum until b
-    4) sum of squares until b
-    5) total count until b"""
-    err_a = np.zeros(max_buckets) - 1
-    cur_err = np.zeros(max_buckets)
-    b_values = [{} for _ in range(max_buckets)]
-    cur_sum = 0
-    cur_sq = 0
-    cur_pts = 0
-    for j in range(len(arr)):
-        cur_sum += arr[j] * count[j]
-        cur_sq += (arr[j] ** 2) * count[j]
-        cur_pts += count[j]
-        cur_err[0] = cur_sq - cur_sum**2/cur_pts
-        if cur_err[0] > (1 + eps) * err_a[0]:
-            err_a[0] = cur_err[0]
-        else:
-            del b_values[0][j - 1]
-        b_values[0][j] = (0, cur_err[0], cur_sum, cur_sq, cur_pts)
-        for k in range(1, max_buckets):
-            cur_err[k] = cur_err[k - 1]
-            a_val = j + 1
-            for b_val in b_values[k - 1].keys():
-                if b_val < j:
-                    _, b_err, b_sum, b_sq, b_pts = b_values[k - 1][b_val]
-                    tmp_error = b_err + cur_sq - b_sq - (cur_sum - b_sum) ** 2 / (cur_pts - b_pts)
-                    # tmp_error = b_err + cur_sq - b_sq - math.pow((cur_sum - b_sum), 2) / (cur_pts - b_pts)
-                    if tmp_error < cur_err[k]:
-                        cur_err[k] = tmp_error
-                        a_val = b_val + 1
-            b_values[k][j] = (a_val, cur_err[k], cur_sum, cur_sq, cur_pts)
-            if cur_err[k] > (1 + eps) * err_a[k]:
-                err_a[k] = cur_err[k]
-            else:
-                del b_values[k][j - 1]
-    return cur_err, b_values
-'''

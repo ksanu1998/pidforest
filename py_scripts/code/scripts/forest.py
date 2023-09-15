@@ -22,7 +22,7 @@ class Forest:
     start = ...  # type: ndarray
     end = ...  # type: ndarray
 
-    @profile
+    
     def __init__(self, **kwargs):
         self.n_trees = kwargs['n_trees']
         self.max_depth = kwargs['max_depth']
@@ -32,19 +32,21 @@ class Forest:
         self.sample_axis = kwargs['sample_axis']
         self.threshold = kwargs['threshold']
         self.tree = []
-        # np.random.seed(seed = 17)
         self.n_leaves = np.zeros(self.n_trees)
 
-    @profile
+    
     def fit(self, pts):
-        # print("Forest -> fit")
         self.points = pts
         self.dim, self.size = np.shape(self.points)
+        print("Dim ", self.dim, "Size ", self.size)
         if int(self.sample_axis*self.dim) == 0:
             print("sample_axis is too low")
             return
         self.start = np.zeros(self.dim)
         self.end = np.zeros(self.dim)
+        print("Init start dim, Init end dim")
+        print(self.start, self.end)
+        
         for axis in range(self.dim):
             val = np.unique(np.array(self.points[axis]))
             if len(val) <= 1:
@@ -52,32 +54,25 @@ class Forest:
                 return
             self.start[axis] = (3 * val[0] - val[1]) / 2
             self.end[axis] = (3 * val[-1] - val[-2]) / 2
+
+        print("Final start dim, Final end dim")
+        print(self.start, self.end)
+        
         k_args = {'depth': 0, 'forest': self}
         max_sample_size = np.min((self.size, self.max_depth*200))
         sample = np.random.choice(self.size, max_sample_size, replace=False)
         for i in range(self.n_trees):
+            print("Building tree #", i)
             k_args['indices'] = np.random.choice(self.size, self.max_samples, replace=False)
             root_node = Node(**k_args)
             root_node.compute_density(sample)
             self.tree.append(root_node)
             self.n_leaves[i] = root_node.compute_leaf_num()
 
-    @profile
-    def plt_scores(self, pts):
-        _, n_pts = np.shape(pts)
-        n_show = int(2 * self.n_trees / 3)
-        scores = np.zeros((self.n_trees, n_pts))  # need to do this streaming
-        indices = [i for i in range(n_pts)]
-        for i in range(self.n_trees):
-            self.tree[i].compute_split(pts, indices, scores[i])
-        for i in range(n_pts):
-            plt.plot(np.sort(scores[:, i])[:n_show])
-            plt.show()
-
-    @profile
     def predict(self, pts, err=0.1, pct=50):
         _, n_pts = np.shape(pts)
-        scores = np.zeros((self.n_trees, n_pts))  # need to do this streaming
+        print("n_pts ", n_pts)
+        scores = np.zeros((self.n_trees, n_pts))
         indices = [i for i in range(n_pts)]
         for i in range(self.n_trees):
             self.tree[i].compute_split(pts, indices, scores[i])
@@ -92,48 +87,9 @@ class Forest:
             anom_scores[top_indices[i]] = scores[:, top_indices[i]]
             anom_pct[top_indices[i]] = min_score[top_indices[i]]
         return top_indices, anom_pts, anom_scores, anom_pct, min_score
-    
-    @profile
-    def predict_depth(self, pts, err=0.1, pct=50):
-        _, n_pts = np.shape(pts)
-        scores = np.zeros((self.n_trees, n_pts))  # need to do this streaming
-        indices = [i for i in range(n_pts)]
-        for i in range(self.n_trees):
-            self.tree[i].compute_depth(pts, indices, scores[i])
-        n_err = int(err * n_pts)
-        min_score = np.percentile(scores, pct, axis=0)
-        top_indices = np.argsort(min_score)[:n_err]
-        anom_pts = {}
-        anom_scores = {}
-        anom_pct = {}
-        for i in range(n_err):
-            anom_pts[top_indices[i]] = pts[:, top_indices[i]]
-            anom_scores[top_indices[i]] = scores[:, top_indices[i]]
-            anom_pct[top_indices[i]] = min_score[top_indices[i]]
-        return top_indices, anom_pts, anom_scores, anom_pct, min_score
-    
-    @profile
-    def find_min_cube(self, pts, n_err=1, pct1=50, pct2=50):
-        _, n_pts = np.shape(pts)
-        scores = np.zeros((self.n_trees, n_pts))  # need to do this streaming
-        indices = [i for i in range(n_pts)]
-        for i in range(self.n_trees):
-            self.tree[i].compute_split(pts, indices, scores[i])
-        min_score = np.percentile(scores, pct1, axis=0)
-        top_indices = np.argsort(min_score)[:n_err]
-        sort_trees = np.argsort(scores, axis=0)
-        min_tree = sort_trees[int(self.n_trees*pct2/100.0)]
-        boxes = []
-        for i in range(0,n_err):
-            print('----')
-            best_tree = min_tree[top_indices[i]]
-            boxes.append( self.tree[best_tree].compute_box(pts[:,top_indices[i]]) )
-            # boxes = self.tree[best_tree].compute_box(pts[:,top_indices[i]])
-        return top_indices, boxes
-
 
 class PointSet:
-    @profile
+    
     def __init__(self, node, indices):
         self.node = node
         self.indices = indices
@@ -153,19 +109,11 @@ class PointSet:
                 gap_arr[-1] = (val_arr[-1] - val_arr[-2]) / 2
                 gap_arr[1:-1] = (val_arr[2:] - val_arr[:-2]) / 2
                 gap = gap_arr.tolist()
-            '''
-            else:
-                gap = np.zeros(len(val))
-                gap[0] = (val[0] + val[1]) / 2 - self.node.cube.start[axis]
-                gap[-1] = self.node.cube.end[axis] - (val[-1] + val[-2]) / 2
-                for i in range(1, len(val) - 1):
-                    gap[i] = (val[i + 1] - val[i - 1]) / 2
-            '''
             self.gap.append(gap)
 
 
 class Cube:
-    @profile
+    
     def __init__(self, node, start, end):
         assert isinstance(node, Node)
         self.node = node
@@ -177,37 +125,13 @@ class Cube:
         self.split_vals = []
         self.vol = 0
         for i in range(self.dim):
-            #print(self.end[i] - self.start[i])
             self.vol += log(self.end[i] - self.start[i])
-        #print('testing')
-
-    @profile
+    
     def filter_indices(self, indices):
         in_lb = self.node.forest.points[:, indices] >= self.start.reshape(self.dim, 1)
         in_ub = self.node.forest.points[:, indices] < self.end.reshape(self.dim, 1)
         return [indices[i] for i in range(len(indices)) if in_lb[:, i].all() and in_ub[:, i].all()]
-
-    """
-    @profile
-    def split_indices(self, pts, indices):
-        n_child = len(self.child)
-        if n_child == 0:
-            return indices
-        n_arr = len(indices)
-        if n_arr == 0:
-            return [[] for _ in range(n_child)]
-        s_arr = pts[self.split_axis]
-        s_start = self.start[self.split_axis]
-        s_end = self.end[self.split_axis]
-        index_split = [[] for _ in range(n_child)]
-        index_split[0] = [ind for ind in indices if np.logical_and(s_arr[ind] >= s_start, s_arr[ind] < self.split_vals[0])]
-        index_split[-1] = [ind for ind in indices if np.logical_and(s_arr[ind] >= self.split_vals[-1], s_arr[ind] < s_end)]
-        index_split[1:-1] = [ [ind for ind in indices if np.logical_and(s_arr[ind] >= self.split_vals[k - 1], s_arr[ind] < self.split_vals[k])] for k in range(1, n_child - 1)]
-        return index_split
-
-    """
     
-    @profile
     def split_indices(self, pts, indices): # original
         n_child = len(self.child)
         if n_child == 0:
@@ -229,10 +153,8 @@ class Cube:
 
 class Node:
 
-    @profile
+    
     def __init__(self, depth, forest, **kwargs):
-        # print("Forest -> fit -> Node -> __init__")
-        
         self.depth = depth
         self.forest = forest
         if self.depth == 0:
@@ -248,22 +170,27 @@ class Node:
         if (self.depth < self.forest.max_depth) and (len(self.point_set.indices) > 1):
             self.find_split()
 
-    @profile
+    
     def find_split(self):
-        # print("Forest -> fit -> Node -> __init__ -> find_split")
+        print("self.cube.dim, ", self.cube.dim)
         imp_axis = [axis for axis in range(self.cube.dim) if len(self.point_set.val[axis]) > 1]
         if not imp_axis:
             return
         max_axes = min(len(imp_axis), int(self.forest.sample_axis * self.cube.dim))
         s_axes = np.random.choice(imp_axis, max_axes, replace=False)
+        print("s_axes, ", s_axes)
+        
         buckets = {}
         var_red = {}
         for axis in s_axes:
             hist = Histogram(self.point_set.gap[axis] / self.point_set.count[axis], self.point_set.count[axis],
                              self.forest.max_buckets, self.forest.epsilon)
             _, var_red[axis], buckets[axis] = hist.best_split()
+            print("axis, var_red[axis], buckets[axis]: ", axis, ", ", var_red[axis], ", ", buckets[axis])
+            
         if np.max(list(var_red.values())) <= self.forest.threshold:
             return
+
         split_axis = np.random.choice(s_axes, p=list(var_red.values()) / np.sum(list(var_red.values())))
         self.cube.split_axis = split_axis
         self.cube.split_vals = [(self.point_set.val[split_axis][i - 1] + self.point_set.val[split_axis][i]) / 2 for i in
@@ -276,7 +203,7 @@ class Node:
                 new_end[split_axis] = self.cube.split_vals[i]
             elif i == 0:
                 new_end[split_axis] = self.cube.split_vals[0]
-            else:  # i == len(self.cube.split_vals)
+            else: 
                 new_start[split_axis] = self.cube.split_vals[-1]
             new_id = copy.deepcopy(self.id_string)
             new_id.append(i)
@@ -286,9 +213,8 @@ class Node:
             self.child.append(child_node)
             self.cube.child.append(child_node.cube)
 
-    @profile
+    
     def compute_density(self, indices):
-        # print("Forest -> fit -> Node -> compute_density")
         num = len(indices)
         if num == 0:
             self.density = 0
@@ -299,10 +225,11 @@ class Node:
         self.density = log(num) - self.cube.vol
         if self.child:
             index_split = self.cube.split_indices(self.forest.points, indices)
+            print("index_split (sizes) [NODE]: ", [len(n) for n in index_split])
             for i in range(len(self.child)):
                 self.child[i].compute_density(index_split[i])
 
-    @profile
+    
     def compute_leaf_num(self):
         if self.child:
             leaves = 0
@@ -312,7 +239,7 @@ class Node:
         else:
             return 1
 
-    @profile
+    
     def compute_split(self, pts, indices, scores):
         if self.child:
             index_split = self.cube.split_indices(pts, indices)
@@ -321,57 +248,3 @@ class Node:
                     self.child[i].compute_split(pts, index_split[i], scores)
         else:
             scores[indices] = self.density
-    
-    @profile        
-    def compute_box(self, pts):
-        if self.child:
-            n_child = len(self.child)
-            s_arr = pts[self.cube.split_axis]
-            print('splitting on axis '+str(self.cube.split_axis)) 
-            s_start = self.cube.start[self.cube.split_axis]
-            s_end = self.cube.end[self.cube.split_axis]
-            if ((s_arr >= s_start) and (s_arr < self.cube.split_vals[0])):
-                #print('splitting on axis '+str(self.cube.split_axis)) 
-                return(self.child[0].compute_box(pts))
-            elif ((s_arr >= self.cube.split_vals[-1]) and (s_arr < s_end)):
-                #print('splitting on axis '+str(self.cube.split_axis)) 
-                return(self.child[-1].compute_box(pts))
-            else:
-                for k in range(1, n_child - 1):
-                    if (s_arr >= self.cube.split_vals[k - 1]) and (s_arr < self.cube.split_vals[k]):
-                        #print(str(k)+'splitting on axis '+str(self.cube.split_axis)+'\n') 
-                        return(self.child[k].compute_box(pts))
-        else:
-            return self.cube
-    
-    @profile  
-    def compute_depth(self, pts, indices, scores):
-        if self.child:
-            index_split = self.cube.split_indices(pts, indices)
-            for i in range(len(self.child)):
-                if len(index_split[i]) > 0:
-                    self.child[i].compute_depth(pts, index_split[i], scores)
-        else:
-            scores[indices] = self.depth    
-    
-    @profile
-    def __str__(self):
-        str_val = "Id: " + str(self.id_string) + "\n"
-        str_val += "Boundary: "
-        for i in range(self.cube.dim):
-            str_val += " [" + str(self.cube.start[i]) + ", " + str(self.cube.end[i]) + "]"
-            if i < self.cube.dim - 1:
-                str_val += " x"
-            else:
-                str_val += "\n"
-        str_val += "Points:\n " + str(np.transpose(self.point_set.points)) + "\n"
-        str_val += "Indices: " + str(self.point_set.indices) + "\n"
-        return str_val
-
-    @profile
-    def print_node(self):
-        print_list = [self]
-        while print_list:
-            node = print_list.pop(0)
-            print(str(node))
-            print_list.extend(node.child)

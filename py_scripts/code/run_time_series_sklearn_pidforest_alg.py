@@ -11,12 +11,9 @@ import scipy.io as sio
 from sklearn import metrics
 import os
 
-# datasets = ['nyc_taxi','ambient_temperature_system_failure','cpu_utilization_asg_misconfiguration','machine_temperature_system_failure','ec2_request_latency_system_failure']
-# datasets = ['nyc_taxi','ambient_temperature_system_failure','cpu_utilization_asg_misconfiguration','machine_temperature_system_failure'] # original
-datasets = ['nyc_taxi']
+datasets = ['machine_temperature_system_failure'] # ['nyc_taxi','ambient_temperature_system_failure','cpu_utilization_asg_misconfiguration','machine_temperature_system_failure','ec2_request_latency_system_failure']
 L = len(datasets)
-# trials = 5 # original
-trials = 1
+trials = 1 #5
 run_lof_svm = 1
 
 for i in range(0,L):
@@ -41,7 +38,6 @@ for i in range(0,L):
         
         print('\n******Iso-Forest*******\n')
         start = time.time()
-        # clf = IsolationForest(contamination = 0.1, behaviour = 'new') # behaviour arg DEPRECATED
         clf = IsolationForest(contamination = 0.1)
         clf.fit(X)
         end = time.time()
@@ -70,7 +66,6 @@ for i in range(0,L):
         
         print('\n******Our Algo*******\n')
         start = time.time()
-        #n_samples = int(t1/50)
         n_samples = 100 # original
         kwargs = {'max_depth': 10, 'n_trees':50,  'max_samples': n_samples, 'max_buckets': 3, 'epsilon': 0.1, 'sample_axis': 1, 
           'threshold': 0} # original
@@ -79,11 +74,12 @@ for i in range(0,L):
         indices, outliers, scores, pst, our_scores = forest.predict(np.transpose(X), err = 0.1, pct = 0)
         end = time.time()
         time_all[j,3] = end - start
-        
         precision_iso, recall_iso, thresholds_iso = metrics.precision_recall_curve(y[:t1], -iso_scores, pos_label=1)
         precision_lof, recall_lof, thresholds_lof = metrics.precision_recall_curve(y[:t1], -lof_scores, pos_label=1)
         precision_osvm, recall_osvm, thresholds_osvm = metrics.precision_recall_curve(y[:t1], -osvm_scores, pos_label=1)
+        
         precision_our, recall_our, thresholds_our = metrics.precision_recall_curve(y[:t1], -our_scores, pos_label=1)
+        
         precision_all[j,0] = max(2*precision_iso*recall_iso/(precision_iso+recall_iso))
         precision_all[j,1] = max(2*precision_lof*recall_lof/(precision_lof+recall_lof))
         precision_all[j,2] = max(2*precision_osvm*recall_osvm/(precision_osvm+recall_osvm))
@@ -139,8 +135,12 @@ for i in range(0,L):
     File_object.write('\n')
         
     File_object.close()
-    
-    file_name = 'experiment_results/' + datasets[i] + '_results.mat'
-    sio.savemat(file_name, {'time_all':time_all, 'precision_all':precision_all, 'auc_all':auc_all})
+
+    print("min_score")
+    for i in range(len(our_scores)):
+        print(our_scores[i])
+
+    # file_name = 'experiment_results/' + datasets[i] + '_results.mat'
+    # sio.savemat(file_name, {'time_all':time_all, 'precision_all':precision_all, 'auc_all':auc_all})
 
     
