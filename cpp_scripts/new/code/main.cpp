@@ -11,6 +11,7 @@
 
 using namespace std;
 
+
 double calculatePrecisionAll(const std::vector<double>& precision_our, const std::vector<double>& recall_our) {
     double max_precision_all = 0.0;
 
@@ -54,17 +55,44 @@ void calculatePrecisionRecallThresholds(const std::vector<int>& y, const std::ve
         precision_our.push_back(precision);
         recall_our.push_back(recall);
         thresholds_our.push_back(threshold);
+        // std::cout << "True +ve: " << true_positives << ", False +ve: " << false_positives << ", False -ve: " << false_negatives << std::endl;
+        // std::cout << "Threshold: " << threshold << ", Precision: " << precision << ", Recall: " << recall << std::endl;
     }
 
     double precision_all = calculatePrecisionAll(precision_our, recall_our);
 
-    std::cout << "Precision All: " << precision_all << std::endl;
+    // std::cout << "Precision All: " << precision_all << std::endl;
 
 }
 
+void calculate_f1_score(const std::vector<int>& y, const std::vector<double>& our_scores, double threshold) {
+    int t1 = y.size();
+    int true_positives = 0;
+    int false_positives = 0;
+    int false_negatives = 0;
+
+    for (int i = 0; i < t1; ++i) {
+        if (our_scores[i] <= -threshold && y[i] == 1) {
+            true_positives++;
+        } else if (our_scores[i] <= -threshold && y[i] == 0) {
+            false_positives++;
+        } else if (our_scores[i] > -threshold && y[i] == 1) {
+            false_negatives++;
+        }
+    }
+
+    double precision = static_cast<double>(true_positives) / (true_positives + false_positives);
+    double recall = static_cast<double>(true_positives) / (true_positives + false_negatives);
+
+    // std::cout << "True +ve: " << true_positives << ", False +ve: " << false_positives << ", False -ve: " << false_negatives << std::endl;
+    // std::cout << "Threshold: " << threshold << ", Precision: " << precision << ", Recall: " << recall << std::endl;
+    double f1_score = 2.0 * precision * recall / (precision + recall);
+    // std::cout << "F1_Score: " << f1_score << std::endl;
+}
 
 int main() {
-    int n_trees = 50;
+    std::cout.precision(10);
+    int n_trees = 50; //50;
     int max_samples = 100;
     int max_depth = 10;
     int max_buckets = 3;
@@ -160,6 +188,44 @@ int main() {
     
     int t1 = X.size();
     std::vector<int> y_slice(label.begin(), label.begin() + t1);
+    // for (int t=0; t < y_slice.size(); t++) {
+    //     std::cout << y_slice[t] << std::endl;
+    // }
+
+    // Create a file stream
+    std::ofstream outputFile("y_slice.txt");
+
+    // Check if the file stream is open
+    if (!outputFile.is_open()) {
+        std::cerr << "Failed to open the file for writing." << std::endl;
+        return 1; // Return an error code
+    }
+
+    // Store the elements from the beginning up to t1 in the file
+    for (int i = 0; i < y_slice.size(); ++i) {
+        outputFile << y_slice[i] << "\n"; // Write each element to a new line
+    }
+
+    // Close the file
+    outputFile.close();
+
+    // Create a file stream
+    std::ofstream outputFile2("our_scores.txt");
+
+    // Check if the file stream is open
+    if (!outputFile2.is_open()) {
+        std::cerr << "Failed to open the file for writing." << std::endl;
+        return 1; // Return an error code
+    }
+
+    // Store the elements from the beginning up to t1 in the file
+    for (int i = 0; i < our_scores.size(); ++i) {
+        outputFile2 << our_scores[i] << "\n"; // Write each element to a new line
+    }
+
+    // Close the file
+    outputFile2.close();
     calculatePrecisionRecallThresholds(y_slice, our_scores);
+    calculate_f1_score(y_slice, our_scores, threshold);
     return 0;
 }

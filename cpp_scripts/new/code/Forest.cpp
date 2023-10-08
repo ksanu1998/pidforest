@@ -42,21 +42,26 @@ void Forest::fit(const std::vector<std::vector<double>>& pts) {
     }
     start.resize(dim);
     end.resize(dim);
-    std::vector<int> sample(std::min(size, max_depth * 200));
-    std::iota(sample.begin(), sample.end(), 0);
+    int max_sample_size = std::min(size, max_depth * 200);
+    std::vector<int> pre_sample(size);
+    std::iota(pre_sample.begin(), pre_sample.end(), 0);
     std::random_device rd;
     std::mt19937 g(rd());
-    std::shuffle(sample.begin(), sample.end(), g);
+    std::shuffle(pre_sample.begin(), pre_sample.end(), g);
+    std::vector<int> sample(pre_sample.begin(), pre_sample.begin() + max_sample_size);
     std::cout << "\n >> Building trees\n";
     for (int i = 0; i < n_trees; ++i) {
         
-        std::vector<int> indices(max_samples);
+        // std::vector<int> indices(max_samples);
+        std::vector<int> indices(size);
         std::iota(indices.begin(), indices.end(), 0);
         std::random_device rd;
         std::mt19937 g(rd());
         std::shuffle(indices.begin(), indices.end(), g);
+        std::vector<int> sampled_indices(indices.begin(), indices.begin() + max_samples);
         std::cout << "\n >> Building tree #" << i + 1<< "/" << n_trees <<"\n";
-        Node root_node(0, this, {{"indices", indices}});
+        // Node root_node(0, this, {{"indices", indices}});
+        Node root_node(0, this, {{"indices", sampled_indices}});
         root_node.compute_density(sample);
         tree.push_back(root_node);
         n_leaves[i] = root_node.compute_leaf_num();
@@ -120,15 +125,15 @@ Forest::predict(const std::vector<std::vector<double>>& pts, double err, double 
         }
         anom_pct[index] = min_score[index];
     }
-    std::cout << "min_score" << std::endl;
-    for (int i = 0; i < min_score.size(); i++) {
-        if (min_score[i] < -500) {
-            std::cout << "xxx " << min_score[i] << std::endl;
-        }
-        else {
-                std::cout << min_score[i] << std::endl;
-        }
-    }
-    std::cout << std::endl << std::endl;
+    // std::cout << "min_score" << std::endl;
+    // for (int i = 0; i < min_score.size(); i++) {
+    //     if (min_score[i] < -500) {
+    //         std::cout << "xxx " << min_score[i] << std::endl;
+    //     }
+    //     else {
+    //             std::cout << min_score[i] << std::endl;
+    //     }
+    // }
+    // std::cout << std::endl << std::endl;
     return std::make_tuple(top_indices, anom_pts, anom_scores, anom_pct, min_score);
 }

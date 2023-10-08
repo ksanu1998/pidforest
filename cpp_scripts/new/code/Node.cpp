@@ -32,6 +32,12 @@ Node::Node(int depth, Forest* forest, const std::unordered_map<std::string, std:
     }
     density = -1;
     child = std::vector<Node>();
+    std::cout << "point_set.indices: ";
+    for (const int& index : point_set.indices) {
+        std::cout << index << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Rec condition: " << (depth < forest->max_depth) << " " << (point_set.indices.size() > 1) << std::endl;
     if ((depth < forest->max_depth) && (point_set.indices.size() > 1)) {
         find_split();
     }    
@@ -98,12 +104,39 @@ void Node::find_split()
     })->second;
 
     if (max_var_red <= forest->threshold) {
+        std::cout << "max_var_red <= forest->threshold" << std::endl;
         return;
     }
+    /* the below code is troublesome! split_axis is not computed correctly */
+    /* split_axis = np.random.choice(s_axes, p=list(var_red.values()) / np.sum(list(var_red.values()))) */
+    /*
     std::vector<int> sample_indices(s_axes.size());
     std::iota(sample_indices.begin(), sample_indices.end(), 0);
     std::shuffle(sample_indices.begin(), sample_indices.end(), std::mt19937{std::random_device{}()});
     int split_axis = s_axes[sample_indices[0]];
+    */
+    /* corrected code */
+    // Calculate the sum of values in var_red
+    double sum = 0.0;
+    for (const auto& entry : var_red) {
+        sum += entry.second;
+    }
+
+    // Create a random number generator
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    
+    // Create a discrete distribution based on the probabilities in var_red
+    std::vector<double> probabilities;
+    for (const auto& entry : var_red) {
+        probabilities.push_back(entry.second / sum);
+    }
+    std::discrete_distribution<int> dist(probabilities.begin(), probabilities.end());
+
+    // Randomly select an element from s_axes based on the probabilities
+    int split_axis = s_axes[dist(gen)];
+
+
 
     cube.split_axis = split_axis;
     cube.split_vals.resize(buckets[split_axis].size());
@@ -112,8 +145,9 @@ void Node::find_split()
             cube.split_vals[i] = (point_set.val[split_axis][buckets[split_axis][i] - 1] + point_set.val[split_axis][buckets[split_axis][i]]) / 2;
         }
     }
-
-    for (std::size_t i = 0; i < cube.split_vals.size() + 1; ++i) {
+    std::cout << "cube.split_axis: " << cube.split_axis << std::endl;
+    for (std::size_t i = 0; i < cube.split_vals.size(); ++i) {
+    // for (std::size_t i = 0; i < cube.split_vals.size() + 1; ++i) {
         std::vector<double> new_start = cube.start;
         std::vector<double> new_end = cube.end;
         if ((i > 0) && (i < cube.split_vals.size())) {
