@@ -82,9 +82,9 @@ std::vector<int> Histogram::compute_buckets(int num_buckets) const {
     }
     std::reverse(buckets.begin(), buckets.end());
     // Remove the first element if it exists
-    if (!buckets.empty()) {
-        buckets.erase(buckets.begin());
-    }
+    // if (!buckets.empty()) {
+    //     buckets.erase(buckets.begin());
+    // }
     return buckets;
 }
 

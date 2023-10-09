@@ -146,8 +146,8 @@ void Node::find_split()
         }
     }
     std::cout << "cube.split_axis: " << cube.split_axis << std::endl;
-    for (std::size_t i = 0; i < cube.split_vals.size(); ++i) {
-    // for (std::size_t i = 0; i < cube.split_vals.size() + 1; ++i) {
+    // for (std::size_t i = 0; i < cube.split_vals.size(); ++i) {
+    for (std::size_t i = 0; i < cube.split_vals.size() + 1; ++i) {
         std::vector<double> new_start = cube.start;
         std::vector<double> new_end = cube.end;
         if ((i > 0) && (i < cube.split_vals.size())) {

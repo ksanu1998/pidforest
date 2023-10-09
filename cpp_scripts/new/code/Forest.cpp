@@ -98,6 +98,11 @@ Forest::predict(const std::vector<std::vector<double>>& pts, double err, double 
             }
         }
         std::sort(column_scores.begin(), column_scores.end());
+        std::cout << "column_scores[" << i << "]: "; 
+        for (int c = 0; c < column_scores.size(); c++) {
+            std::cout << column_scores[c] << " ";
+        }
+        std::cout << std::endl;
         int index = static_cast<int>(pct / 100.0 * (n_trees - 1)); // since pct = 0, this always sets index to 0 (min)
         min_score[i] = column_scores[index];
     }
@@ -125,15 +130,15 @@ Forest::predict(const std::vector<std::vector<double>>& pts, double err, double 
         }
         anom_pct[index] = min_score[index];
     }
-    // std::cout << "min_score" << std::endl;
-    // for (int i = 0; i < min_score.size(); i++) {
-    //     if (min_score[i] < -500) {
-    //         std::cout << "xxx " << min_score[i] << std::endl;
-    //     }
-    //     else {
-    //             std::cout << min_score[i] << std::endl;
-    //     }
-    // }
-    // std::cout << std::endl << std::endl;
+    std::cout << "min_score" << std::endl;
+    for (int i = 0; i < min_score.size(); i++) {
+        if (min_score[i] < -500) {
+            std::cout << "xxx " << min_score[i] << std::endl;
+        }
+        else {
+                std::cout << min_score[i] << std::endl;
+        }
+    }
+    std::cout << std::endl << std::endl;
     return std::make_tuple(top_indices, anom_pts, anom_scores, anom_pct, min_score);
 }
