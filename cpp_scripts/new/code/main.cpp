@@ -121,7 +121,7 @@ int main() {
     };
     Forest mForest(kwargs);
     
-    string dataset = "cpu_utilization_asg_misconfiguration";  // [nyc_taxi, ambient_temperature_system_failure, machine_temperature_system_failure, cpu_utilization_asg_misconfiguration] Set your dataset name here
+    string dataset = "ambient_temperature_system_failure";  // [nyc_taxi, ambient_temperature_system_failure, machine_temperature_system_failure, cpu_utilization_asg_misconfiguration] Set your dataset name here
     
     string filename = "../data/numenta/" + dataset + ".csv";
     ifstream file(filename);

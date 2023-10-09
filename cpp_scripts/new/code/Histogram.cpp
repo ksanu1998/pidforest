@@ -37,10 +37,20 @@ Histogram::BestSplit Histogram::best_split() const {
     for (int i = 1; i < max_buckets; i++) {
         err_red[i - 1] = err[0] - err[i];
     }
+    double max_err_red = err_red[0];
+    // std::cout << "err_red: ";
+    for (int i = 0; i < err_red.size(); i++) {
+        // std::cout << err_red[i] << " ";
+        if (err_red[i] >= max_err_red) {
+            max_err_red = err_red[i];
+        }
+    }
+    // std::cout << std::endl;
+
     
-    double max_err_red = *std::max_element(err_red.begin(), err_red.end());
+    // double max_err_red = *std::max_element(err_red.begin(), err_red.end());
     double var_red = max_err_red / err[0];
-    
+    // std::cout << "var_red: " << var_red << std::endl;
     if (var_red < 0) {
         var_red = 0;
     }
@@ -96,37 +106,77 @@ std::pair<std::vector<double>, std::vector<std::unordered_map<int, Histogram::Bu
         if (cur_err[0] > (1 + eps) * err_a[0]) {
             err_a[0] = cur_err[0];
         } else {
-            b_values[0].erase(j - 1);
+            // b_values[0].erase(j - 1);
+            if (j > 0) {
+                b_values[0].erase(j - 1);
+            }
+            else {
+                b_values[0].erase(b_values[0].size() - 1);
+            }
+            
         }
         b_values[0][j] = BucketValues(0, cur_err[0], cur_sum, cur_sq, cur_pts);
         
         for (int k = 1; k < max_buckets; k++) {
             cur_err[k] = cur_err[k - 1];
             int a_val = j + 1;
+            /* here the dictionary in b_values[k - 1] is sorted in descending order as 
+            * a result of which the break inside for loop is breaking instantly leading to errors
+            * hence reversed the condition for the logic to work properly
+            */
+            // std::cout << "b_val: ";
+            // for (const auto& b_val_data : b_values[k - 1]) {
+            //     int b_val = b_val_data.first;
+            //     std::cout << b_val << " ";
+            // }
+            // std::cout << std::endl;
+            // std::cout << "j: " << j << ", b_val: ";
             for (const auto& b_val_data : b_values[k - 1]) {
                 int b_val = b_val_data.first;
-                if (b_val >= j) {
-                    break;
+                
+                // if (b_val >= j) {
+                //     break;
+                // }
+                if (b_val < j) {
+                    // std::cout << b_val << " ";
+                    const BucketValues& b_data = b_val_data.second;
+                    double b_err = b_data.err_a;
+                    double b_sum = b_data.cur_sum;
+                    double b_sq = b_data.cur_sq;
+                    int b_pts = b_data.cur_pts;
+                    double tmp_error = b_err + cur_sq - b_sq - std::pow((cur_sum - b_sum), 2) / (cur_pts - b_pts);
+                    if (tmp_error < cur_err[k]) {
+                        cur_err[k] = tmp_error;
+                        a_val = b_val + 1;
+                    }
                 }
-                const BucketValues& b_data = b_val_data.second;
-                double b_err = b_data.err_a;
-                double b_sum = b_data.cur_sum;
-                double b_sq = b_data.cur_sq;
-                int b_pts = b_data.cur_pts;
-                double tmp_error = b_err + cur_sq - b_sq - std::pow((cur_sum - b_sum), 2) / (cur_pts - b_pts);
-                if (tmp_error < cur_err[k]) {
-                    cur_err[k] = tmp_error;
-                    a_val = b_val + 1;
-                }
+                // const BucketValues& b_data = b_val_data.second;
+                // double b_err = b_data.err_a;
+                // double b_sum = b_data.cur_sum;
+                // double b_sq = b_data.cur_sq;
+                // int b_pts = b_data.cur_pts;
+                // double tmp_error = b_err + cur_sq - b_sq - std::pow((cur_sum - b_sum), 2) / (cur_pts - b_pts);
+                // if (tmp_error < cur_err[k]) {
+                //     cur_err[k] = tmp_error;
+                //     a_val = b_val + 1;
+                // }
             }
+            // std::cout << std::endl;
             b_values[k][j] = BucketValues(a_val, cur_err[k], cur_sum, cur_sq, cur_pts);
             if (cur_err[k] > (1 + eps) * err_a[k]) {
                 err_a[k] = cur_err[k];
             } else {
-                b_values[k].erase(j - 1);
+                // b_values[k].erase(j - 1);
+                if (j > 0) {
+                    b_values[0].erase(j - 1);
+                }
+                else {
+                    b_values[0].erase(b_values[0].size() - 1);
+                }
             }
         }
     }
+    // std::cout << "cur_err: " << cur_err[0] << " " << cur_err[1] << " " << cur_err[2] << std::endl; 
     return std::make_pair(cur_err, b_values);
 }
 
